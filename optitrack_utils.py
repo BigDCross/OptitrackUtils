@@ -1,14 +1,30 @@
 import rospy
-from geometry_msgs.msg import Pose
 from geometry_msgs.msg import PoseStamped
-from geometry_msgs.msg import Point
-from geometry_msgs.msg import Quaternion
-from geometry_msgs.msg import Vector3
 
-from RigidBody import *
+from rigid_body import *
 
 class OptitrackUtils:
+    """
+    Used in conjunction with vrpn_client_ros to receive and store rigid body
+    data that is being published.
+
+    Please make sure to initialize a ros node before using this class.
+
+    Attributes
+    ----------
+    rigid_body_names : list of str
+    rigid_bodies : list of RigidBody
+    """
     def __init__(self, rigid_body_names):
+        """
+        Subscribes to a ROS topic published by vrpn_client_ros for each
+        inputted rigid body name and initializes a RigidBody instance for each.
+
+        Parameters
+        ----------
+        rigid_body_names : list of str
+        """
+
         self.subscribers = []
         self.rigid_body_names = rigid_body_names
         self.vrpndatatopic = 'vrpn_client_node'
@@ -18,18 +34,30 @@ class OptitrackUtils:
             rb = RigidBody(name)
             self.rigid_bodies[name] = rb
 
-        self.setup_subscribers()
+        self._setup_subscribers()
 
-    def pose_callback(self, pose, name):
+    def _pose_callback(self, pose, name):
         self.rigid_bodies[name].input_pose_msg(pose)
 
-    def setup_subscribers(self):
+    def _setup_subscribers(self):
         for idx, r in enumerate(self.rigid_body_names):
             rospy.loginfo("subscribing to topic: /" + self.vrpndatatopic + "/" + r + "/pose")
-            sub = rospy.Subscriber(self.vrpndatatopic + "/" + r + "/pose", PoseStamped, self.pose_callback, (r))
+            sub = rospy.Subscriber(self.vrpndatatopic + "/" + r + "/pose", PoseStamped, self._pose_callback, (r))
             self.subscribers.append(sub)
 
     def get_rigid_body(self, name):
+        """
+        Returns RigidBody of specified name
+
+        Parameters
+        ----------
+        name : str
+
+        Returns
+        -------
+        rigid_body : RigidBody
+        """
+
         return self.rigid_bodies[name]
 
 """
